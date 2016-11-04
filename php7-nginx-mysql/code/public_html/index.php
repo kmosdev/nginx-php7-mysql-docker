@@ -1,6 +1,6 @@
 <?php
 
-$mysql_host = '192.168.99.100'; //if you run docker on Windows or Mac you need to use the IP of your host machine, output by running docker-machine ip
+$mysql_host = db; //if you run docker on Windows or Mac you need to use the IP of your host machine, output by running docker-machine ip
 $mysql_db = 'dbname'; //set in docker-compose
 $mysql_user = 'dbuser';  //set in docker-compose
 $mysql_pass = 'dbpass';  //set in docker-compose

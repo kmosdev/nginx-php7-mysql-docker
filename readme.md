@@ -31,7 +31,7 @@ The docker compose file will create three containers. One each for Nginx, PHP, a
 Move to the directory php7-nginx-mysql and look at the docker compose file.
 
 ```
-cd ../php7-custom-conf
+cd ../php7-nginx-mysql
 cat docker-compose.yml
 ```
 
@@ -65,11 +65,11 @@ $mysql_pass = 'dbpass';  //match what is set in docker-compose
 
 ### Step 4: Run Docker Compose
 
-Now change back to the root directory of php7-nginx-mysql and run docker-machine up
+Now change back to the root directory of php7-nginx-mysql and run docker-compose up
 
 ```
 cd ../../
-docker-machine up
+docker-compose up
 ```
 
 You should now be able to access your nginx server at your ip:8080. Using the example IP above it would be:
