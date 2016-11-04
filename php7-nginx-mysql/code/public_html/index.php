@@ -1,9 +1,9 @@
 <?php
 
-$mysql_host = db; //if you run docker on Windows or Mac you need to use the IP of your host machine, output by running docker-machine ip
-$mysql_db = 'dbname'; //set in docker-compose
-$mysql_user = 'dbuser';  //set in docker-compose
-$mysql_pass = 'dbpass';  //set in docker-compose
+$mysql_host = db; //this is automatically set to the hostname of the database because we linked them in docker-compose.yml
+$mysql_db = 'dbname'; //set in docker-compose.yml
+$mysql_user = 'dbuser';  //set in docker-compose.yml
+$mysql_pass = 'dbpass';  //set in docker-compose.yml
 
 $link = mysqli_connect($mysql_host, $mysql_user, $mysql_pass, $mysql_db);
 

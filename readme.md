@@ -1,102 +1,110 @@
-# Beginner Windows Docker Dev Envrionment
-## with Docker Compose, Nginx, PHP 7, MySQL 5.7
+# Docker Compose, Nginx, PHP 7, MySQL 5.7
 
-This is a basic set up using docker compose to create an environment running nginx (latest), php 7 and mysql 5.7. I created this on Windows/Boot2Docker some parts may not be optimized for Docker on Linux but I believe the compose file should work on any environment. This is intended as a development envrionment, there are additional security measures to take for production.
-
-You can use environment variables to automate the settings that we manually set here, however I felt that walking through this simple set up would help users get a better understanding of how docker works, and point out common errors or pitfalls especially when using docker with a VM.
+This is a basic set up using docker compose to create an environment running nginx (latest), php 7 and mysql 5.7. This is intended as a development envrionment, there are additional security measures to take for production.
 
 
-##Instructions:
+# Quick Start:
 
-All steps are to be carried out from MINGW on Windows. Boot2Docker should've installed a shortcut called "Docker Quickstart" which you can use to open the CLI with all variables set.
+All steps are to be carried out from Git bash on Windows or terminal in Mac or Linux. Platform specific instructions below. Note that while Windows and Mac come with Compose you need to manually install it on Linux.
+
 
 ### Step 1: Build the customized PHP 7 image from included Dockerfile
 
-Inside the php7-custom-conf directory is a Dockerfile that pulls the offical PHP 7 image and modifies the configuration. Use this to build your own docker image.
+Inside the php7-custom-conf directory is a Dockerfile that pulls the offical PHP 7 image and modifies the configuration. Use this to build your own docker image. This is required for apps like Wordpress which need mysqli. It is not enabled by default in PHP 7.
 
 ```
 cd php7-custom-conf
 docker build -t php7-custom-conf .
 ```
-Now that your image has been created you can pull from it in docker compose. Confirm that the image was created with the correct name by running:
+
+Now that your image has been created you can use it in docker compose. Confirm that the image was created with the correct name by running:
 
 ```
 docker images
 ```
 
-### Step 2: Set your MySQL default values
+You should see one called php7-custom-conf
 
-The docker compose file will create three containers. One each for Nginx, PHP, and MySQL. We need to configure the database username, pass etc and provide those to the PHP script. 
+### Step 2: Run Docker Compose
 
-Move to the directory php7-nginx-mysql and look at the docker compose file.
+Now change back to the root directory of php7-nginx-mysql and run docker-compose up.
 
 ```
-cd ../php7-nginx-mysql
-cat docker-compose.yml
+cd php7-nginx-mysql
+docker-compose up
 ```
 
-Open the file in an editor and set the variables for MySQL root password, default table, username and pass.
+You should now be able to access your nginx server at your the IP of your host machine. 
 
-### Step 3: Set the MySQL variables in your PHP script
+```
+http://localhost
+```
 
-If you're using Windows or Mac you need to set the IP of your docker machine as the MySQL host. This works because we forward the port of the docker container to the host port in our compose file. To get the docker machine IP type:
+See below for finding your IP on Windows or Mac.
+
+When you're done you can shutdown the environment by pressing CTL-C.
+
+# Extras
+
+## Finding your IP
+
+If you use Windows or Mac to run docker in a VM you'll access your webserver at the IP of the VM host. You can find it by typing:
 
 ```
 docker-machine ip
 ```
 
-This should return something like: 192.168.99.100
+Since we exposed port 3306 in our database you can also use this IP to access your db from MySQL Worbench or similar.
 
-Now open index.php to fill in the values. I included a very basic php script for connecting via mysqli. You could also use these same values in wp-config.php for a wordpress site, or for any other PHP apps.
+## Container Linking and Configuration
 
-```
-cd code/public_html/index.php
-cat code/public_html/index.php
-```
+Take a look at the mysql config in our php file.
 
-Open the index.php file.
+Note how $mysql_host is set to db. This works because we linked the containers in docker-compose.yml. The other MySQL variables are set in the db section of docker-compose.yml.
+
 
 ```
-$mysql_host = '192.168.99.100'; //the IP returned from docker-machine in the line above, I filled in my example IP
-$mysql_db = 'dbname'; //match what is set in docker-compose
-$mysql_user = 'dbuser';  //match what is set in docker-compose
-$mysql_pass = 'dbpass';  //match what is set in docker-compose
-```
-
-### Step 4: Run Docker Compose
-
-Now change back to the root directory of php7-nginx-mysql and run docker-compose up
+//php7-nginx-mysql/code/public_html/index.php
+$mysql_host = db; //this is automatically set to the hostname of the database because we linked them in docker-compose.yml
+$mysql_db = 'dbname'; //set in docker-compose.yml
+$mysql_user = 'dbuser';  //set in docker-compose.yml
+$mysql_pass = 'dbpass';  //set in docker-compose.yml
 
 ```
-cd ../../
-docker-compose up
-```
 
-You should now be able to access your nginx server at your ip:8080. Using the example IP above it would be:
+Here is how it's linked in docker-compose.yml
 
 ```
-http://192.168.99.100:8080
+#php7-nginx-mysql/docker-compose.yml
+php:
+	image: php7-custom-conf
+	volumes:
+	    - ./code/public_html:/code
+	links:
+	    - db
 ```
 
-When you're done you can shutdown the environment by pressing CTL-C.
+## Volumes with a VM
+If you installed Boot2Docker on Windows you should've automatically had VirtualBox installed with your C: drive as a shared directory. If you are getting permissions errors when trying to mount volumes make sure you're working on your C drive. You can open the VirtualBox GUI and confirm settings.
 
-Remove any container data:
+## Persistent Data
+After you run this once your database data and code will be persistent in mounted volumes. If you get an error and need to start over you can remove the .data directory with docker creates and run this command to remove any container data.
 
 ```
 docker-compose rm -vf
 ```
 
-## Next Steps and Resources
-Once you have this working you will probably want to use docker enviornment variables to automate the link between php and mysql. Doing it this way first give you some insight into how everything works. You can also access your MySQL instance from your host machine using the same IP and details above (using MySQL Workbench for example).
+## Expose environment variables
+
+```
+docker-compose run [service] env
+docker-compose run db env
+```
+
+
+## Resources
 
 This was put together from these tutorials and resources:
-http://geekyplatypus.com/dockerise-your-php-application-with-nginx-and-php7-fpm/
-http://geekyplatypus.com/making-your-dockerised-php-application-even-better/
-https://docs.docker.com/compose/wordpress/
-
-## Caveats and Troublshooting
-
-### Volumes with a VM
-If you installed Boot2Docker on Windows you should've automatically had VirtualBox installed with your C: drive as a shared directory. If you are getting permissions errors when trying to mount volumes make sure you're working on your C drive. You can open the VirtualBox GUI and confirm settings.
-
-The first time you run docker compose it should create a .data directory. If you have trouble getting mysql to start and have to adust settings be sure to delete that directory and run the docker-compose rm command from above before trying again. Once you've successfully launched mysql your data will be persistent as long as you don't delete that data directory.
+-http://geekyplatypus.com/dockerise-your-php-application-with-nginx-and-php7-fpm/
+-http://geekyplatypus.com/making-your-dockerised-php-application-even-better/
+-https://docs.docker.com/compose/wordpress/
